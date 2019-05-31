@@ -20,12 +20,12 @@
 \input{Dissertation/disstyles}  % Стили для диссертации
 \input{Dissertation/userstyles} % Стили для специфических пользовательских задач
 
-%%% Библиография. Выбор движка для реализации %%%
-\ifnumequal{\value{bibliosel}}{0}{%
-    \input{biblio/predefined}   % Встроенная реализация с загрузкой файла через движок bibtex8
-}{
-    \input{biblio/biblatex}     % Реализация пакетом biblatex через движок biber
-}
+%%%% Библиография. Выбор движка для реализации %%%
+%\ifnumequal{\value{bibliosel}}{0}{%
+%    \input{biblio/predefined}   % Встроенная реализация с загрузкой файла через движок bibtex8
+%}{
+%    \input{biblio/biblatex}     % Реализация пакетом biblatex через движок biber
+%}
 
 % Вывести информацию о выбранных опциях в лог сборки
 \typeout{Selected options:}
@@ -35,19 +35,11 @@
 \typeout{Bibliography backend : \arabic{bibliosel}}
 \typeout{Precompile images : \arabic{imgprecompile}}
 
-%%% Управление компиляцией отдельных частей диссертации %%%
-% Необходимо сначала иметь полностью скомпилированный документ, чтобы все
-% промежуточные файлы были в наличии
-% Затем, для вывода отдельных частей можно воспользоваться командой \includeonly
-% Ниже примеры использования команды:
-%
-%\includeonly{Dissertation/part2}
-%\includeonly{Dissertation/contents,Dissertation/appendix,Dissertation/conclusion}
-%
-% Если все команды закомментированы, то документ будет выведен в PDF файл полностью
-
 \begin{document}
-
+	
+\makeatletter
+\renewcommand{\@biblabel}[1]{#1.\hfil}
+\makeatother
 \input{common/renames}                 % Переопределение именований
 
 %%% Структура диссертации (ГОСТ Р 7.0.11-2011, 4)
@@ -60,8 +52,20 @@
 \include{Dissertation/conclusion}      % Заключение
 %\include{Dissertation/acronyms}        % Список сокращений и условных обозначений
 %\include{Dissertation/dictionary}      % Словарь терминов
-\include{Dissertation/references}      % Список литературы
+%\include{Dissertation/references}      % Список литературы
 \include{Dissertation/lists}           % Списки таблиц и изображений (иллюстративный материал)
+
+%\nocite{*}
+\bibliographystyle{biblio/utf8gost705u}
+\bibliography{biblio/external}
+%\newpage
+%\addcontentsline{toc}{chapter}{Список публикаций}
+%\renewcommand{\bibsection}{\chapter*{Список публикаций}}
+%\nociteauthor{*}
+%\bibliographystyleauthor{biblio/utf8gost71u}
+%%\bibliographyauthor{biblio/author}
+
+
 
 %%% Настройки для приложений
 \appendix
