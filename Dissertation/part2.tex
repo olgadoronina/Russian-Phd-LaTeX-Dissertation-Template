@@ -1,4 +1,4 @@
-\chapter{Динамическая адаптация сетки} \label{ch:ch2}
+\chapter{Динамическая адаптация сетки путём движения узлов} \label{ch:ch2}
 
 \section{Метод движения сетки}
 Подробное описание и исследование адаптивных методов движения сетки было проведено Хуанг и Рассел в их монографии~\cite{huang_adaptive_2011}. Основная идея этого подхода состоит в построении взаимно-однозначного отображения между физической $\Omega$ и вычислительной $\Omega_c$  областями, описываемыми в одномерном случае как:
@@ -34,7 +34,7 @@ I[x] = \frac{1}{2}\int_{0}^{1}\left(\rho(x)\frac{dx}{d\xi} \right)^2d\xi.
 \frac{\partial x}{\partial t} = \frac{1}{\tau \rho}\frac{\partial}{\partial \xi}\left(\rho(x)\frac{\partial x}{\partial \xi} \right),
 \label{eq:MMPDE5}
 \end{equation} 
-где настроечный параметр  $\tau$ определяет масштаб времени при решении нестационарного уравнения.
+где настроечный параметр  $\tau$ определяет масштаб времени при решении нестационарного уравнения. Меньшие значения $\tau$ обеспечивают более быструю адаптацию сетки к изменениям в функции плотности узлов $\rho$. 
 
 В двумерном случае для определения функции отображения  $x(\xi, \eta)$ вычислительной области $\Omega_c$  в физическую $\Omega$  используется вариационный принцип, позволяющий получить разрешающее уравнение на основе минимизации следующего функционала~\cite{huang_moving_1998, henderson1997nonlinear}
 \begin{equation}\label{eq:functional2d}
@@ -122,4 +122,71 @@ I[\xi,\eta] = \frac{1}{2}\iint\limits_{\Omega}\frac{1}{\rho(x,y)}\left(|\nabla \
 \end{equation}
 По всей видимости, такое упрощение допустимо, если рассматривается изотропная адаптация при относительно слабой степени требуемого сгущения сетки. При таких постановках использование уравнения движения сетки~\eqref{eq:jasak} не приводит к фатальному ухудшению качества адаптированной сетки и позволяет получать вполне приемлемые численные результаты. 
 
-Следует заметить, что численная реализация расчета с использованием уравнения~\eqref{eq:jasak} существенно проще, по сравнению с полной формулировкой~\eqref{eq:movmesheq} и требует заметно меньше вычислительных ресурсов. В приводимых ниже примерах для отработки общего алгоритма мы используем упрощенную формулировку, в то время как рассмотрение общего случая планируется в ближайшем будущем.
+Следует заметить, что численная реализация расчета с использованием уравнения~\eqref{eq:jasak} существенно проще, по сравнению с полной формулировкой~\eqref{eq:movmesheq} и требует заметно меньше вычислительных ресурсов. В приводимых ниже примерах для отработки общего алгоритма  используется упрощенная формулировка, в то время как рассмотрение общего случая планируется в ближайшем будущем.
+
+\section{Реализация в программном компрексе Noisette.}
+
+В конечно-объемной интерпретации оператор Лапласа может быть записан следущим образом
+\begin{equation}
+\nabla(\rho(\mathbf{x}) \nabla \mathbf{x})\approx \frac{3}{2}\frac{1}{V}\int \nabla(\rho(\mathbf{x}) \nabla \mathbf{x}) dV.
+\label{eq:lapl_1}
+\end{equation}
+%где $V$ -- объем. 
+Применяя теорему Остроградского-Гаусса к уравнению~\eqref{eq:lapl_1} и дискретезируя интеграл на треугольной сетке, получим:
+\begin{equation}
+\nabla(\rho(\mathbf{x}) \nabla \mathbf{x})\approx \frac{3}{2}\frac{1}{S}\int \rho (\mathbf{n}\cdot \nabla \mathbf{x})dS
+\approx \frac{3}{2}\frac{1}{S}\sum_{T} \rho_T (\mathbf{n}_T\cdot(\nabla \mathbf{x})_T) ,
+\end{equation}
+гле $T$ обозначет треугольник, $n_T$ -- нормаль к элементу противоположному к узлу $G$ и суммирование проводится по всем треугольникам прилегающим к узлу $G$ (Figure ...).
+Градиент $(\nabla \mathbf{x})_T$ на каждом треугольнике может быть вычислен как 
+\begin{equation}
+(\nabla \mathbf{x})_T = \frac{1}{S_T}\sum_{e\in T}\mathbf{n}_e \frac{\mathbf{x}_L+\mathbf{x}_R}{2},
+\label{eq:gradient}
+\end{equation}
+где $S_T$ -- площадь треульника, $\mathbf{n}_e$  -- нормаль к каждому элементу треугольника, $\mathbf{x}_L$ и $\mathbf{x}_R$ обозначают значения в левом и правом узле элемента сооветственно.
+
+Заметим, что в треугольнике $\mathbf{n}_1+\mathbf{n}_2 = -\mathbf{n}_3$. Это позволяет нам переписать уравнение~\eqref{eq:gradient} в более удобной форме
+\begin{equation}
+\begin{split}
+(\nabla \mathbf{x})_T &= \frac{1}{S_T}\left( \mathbf{n}_1 \frac{\mathbf{x}_2+\mathbf{x}_3}{2} + \mathbf{n}_2 \frac{\mathbf{x}_1+\mathbf{x}_3}{2} +\mathbf{n}_3 \frac{\mathbf{x}_1+\mathbf{x}_2}{2} \right)=\\
+&= \frac{1}{S_T}\left[\frac{1}{2}\mathbf{x}_1(\mathbf{n}_2+\mathbf{n}_3) + \frac{1}{2}\mathbf{x}_2(\mathbf{n}_1+\mathbf{n}_3) + \frac{1}{2}\mathbf{x}_3(\mathbf{n}_1+\mathbf{n}_2) \right]=\\
+&=-\frac{1}{2S_T}\sum_{k=0}^{2}\mathbf{x}_k\mathbf{n}_k.
+\end{split}
+\end{equation}
+Таким образос оператов Лапласа с переменным коэффициентом $\rho$ на неструктурированной сетке может быть записан как
+\begin{equation}
+\begin{split}
+\nabla(\rho \nabla \mathbf{x})
+&\approx \frac{1}{S_G}\sum_{T\ni G}\rho \mathbf{n}_T \left(-\frac{1}{2S_T}\sum_{k=0}^{2}\mathbf{x}_k\cdot\mathbf{n}_k\right) =\\
+&= \frac{1}{2S_T}\left[-\sum_{K\in N^1(G)}\frac{\rho_G + \rho_K}{2}\mathbf{x}_K \sum_{T\ni G,K}\frac{\mathbf{n}_{T,G} \cdot \mathbf{n}_{T,K}}{2S_T} - \mathbf{x}_G \sum \frac{\mathbf{n}_{T,G}^2}{2S_T}\right] =\\
+&=-\frac{1}{2S_G}\left[ \sum_{K\in N^1(G)} \frac{\rho_G + \rho_K}{2} (\mathbf{x}_G - \mathbf{x}_K) \sum_{T\ni G,K}\frac{\mathbf{n}_{T,G} \cdot \mathbf{n}_{T,K}}{2S_T} \right],
+\end{split}
+\end{equation}
+где $S_G$ -- площадь все прилегающих к узлу  $G$ треугольников, $N^1(G)$ -- соседи узла $G$ первого порядка.
+
+Таким образом дифференциальный оператор Лапласа с переменным коэффициетном в уравнение~\eqref{eq:movmesheq} можно заменить разностным оператором, обозначим его $A$
+\begin{equation}
+\frac{\partial \mathbf{x}}{\partial t} = \frac{1}{\tau \rho}A\mathbf{x}.
+\end{equation}
+Дискретизируя по времени и переписывая правую часть в более удобном виде, получаем
+\begin{equation}
+\frac{\mathbf{x}^{n+1} - \mathbf{x}^{n}}{\Delta t} = \frac{1}{\tau \rho^n}(A(\mathbf{x}^{n+1} -\mathbf{x}^n ) + A\mathbf{x}^{n}).
+\end{equation}
+Таким образом, решение уравнения~\eqref{eq:movmesheq} сводится к решению системы линейных алгебраических уравнений
+\begin{equation}\label{eq:numerical}
+\left(\frac{ \tau \rho^n}{\Delta t } - A\right) \Delta \mathbf{x} =  A\mathbf{x}^{n}
+\end{equation}
+на каждом шаге по времени.
+
+Пример результата решения уравнения~\eqref{eq:numerical} для равномерных двумерных сеток с функцией $\rho$ заданной таблицей значений проведен на рисунке~\ref{fig:matroskin}. Это сетка не подходит для газодинамических расчетов и просто является примером работы алгоритма на произвольно заданной функции $\rho$.
+\begin{figure}[b]
+{\centering
+	\subbottom[List-of-Figures entry][функция сеточной плотности $\rho$ \label{fig:cat}]{%
+		\includegraphics[width=0.42\linewidth]{picture_cat}}
+	\hfill
+	\subbottom[результат адаптации\label{fig:cat_mesh}]{%
+		\includegraphics[width=0.45\linewidth]{cat_mesh1}}
+}
+\caption{Стационарная адаптация сетки путем перераспеделения узлов у произвольно заданной функции сеточной плотности. (a) заданная функция сеточной плотности $\rho$, (б) результат адаптации к заданной функции $\rho$.}
+\label{fig:matroskin}
+\end{figure}
