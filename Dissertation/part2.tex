@@ -134,8 +134,8 @@ I[\xi,\eta] = \frac{1}{2}\iint\limits_{\Omega}\frac{1}{\rho(x,y)}\left(|\nabla \
 %где $V$ -- объем. 
 Применяя теорему Остроградского-Гаусса к уравнению~\eqref{eq:lapl_1} и дискретезируя интеграл на треугольной сетке, получим:
 \begin{equation}
-\nabla(\rho(\mathbf{x}) \nabla \mathbf{x})\approx \frac{3}{2}\frac{1}{S}\int \rho (\mathbf{n}\cdot \nabla \mathbf{x})dS
-\approx \frac{3}{2}\frac{1}{S}\sum_{T} \rho_T (\mathbf{n}_T\cdot(\nabla \mathbf{x})_T) ,
+\nabla(\rho(\mathbf{x}) \nabla \mathbf{x})\approx \frac{1}{S}\int \rho (\mathbf{n}\cdot \nabla \mathbf{x})dS
+\approx \frac{1}{S}\sum_{T} \rho_T (\mathbf{n}_T\cdot(\nabla \mathbf{x})_T) ,
 \end{equation}
 гле $T$ обозначет треугольник, $n_T$ -- нормаль к элементу противоположному к узлу $G$ и суммирование проводится по всем треугольникам прилегающим к узлу $G$ (Figure ...).
 Градиент $(\nabla \mathbf{x})_T$ на каждом треугольнике может быть вычислен как 
